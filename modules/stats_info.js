@@ -1,7 +1,7 @@
 // ======================= modules/stats_info.js =======================
+
 export function buildStatsInfo(data) {
-  return `
-    stats = {
+  return `    stats = {
         health = ${data.hp},
         attack = ${data.attack},
         defense = ${data.defense},

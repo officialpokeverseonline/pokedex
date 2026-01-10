@@ -1,4 +1,4 @@
-<!-- ======================= pokemon.html (VERSÃO À PROVA DE BUG) ======================= -->
+<!-- ======================= pokemon.html ======================= -->
 <!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -43,7 +43,20 @@ img{
   background:#222;
   border-radius:10px;
   padding:6px;
+}
+
+.main-poke{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+}
+
+.moves-btn{
   cursor:pointer;
+  font-size:11px;
+  color:#6cf;
+  text-decoration:underline;
 }
 
 .section-title{
@@ -96,6 +109,7 @@ window.copyCode = ()=>{
 }
 
 window.go = i => location.href = `pokemon.html?id=${i}`
+window.goMoves = i => location.href = `pokemonmoves.html?id=${i}`
 
 async function safeFetch(url){
   const r = await fetch(url)
@@ -108,11 +122,9 @@ async function load(){
     const p = await safeFetch(`https://pokeapi.co/api/v2/pokemon/${id}`)
     const s = await safeFetch(p.species.url)
 
-    /* ===== CÓDIGO LUA ===== */
     const lua = await assemblePokemon(id)
     document.getElementById("code").innerText = lua
 
-    /* ===== NAV ===== */
     const nav = document.getElementById("nav")
     nav.innerHTML = ""
 
@@ -127,9 +139,10 @@ async function load(){
     }
 
     nav.innerHTML += `
-      <div class="item">
+      <div class="main-poke">
         <img src="${artwork(id)}">
         <div>${cap(p.name)}</div>
+        <div class="moves-btn" onclick="goMoves(${id})">MOVES</div>
       </div>`
 
     const next = await safeFetch(`https://pokeapi.co/api/v2/pokemon/${id+1}`)
@@ -140,7 +153,6 @@ async function load(){
         <div>${cap(next.name)}</div>
       </div>`
 
-    /* ===== EVOLUTIONS ===== */
     const evoDiv = document.getElementById("evolutions")
     evoDiv.innerHTML = ""
 
@@ -157,7 +169,6 @@ async function load(){
     }
     await walk(evoChain.chain)
 
-    /* ===== FORMS ===== */
     const formsDiv = document.getElementById("forms")
     formsDiv.innerHTML = ""
 

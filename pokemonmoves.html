@@ -1,0 +1,154 @@
+<!-- ======================= pokemonmoves.html (FINAL COMPLETO – PASSIVE ABILITY COMO ÚLTIMA SPELL) ======================= -->
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<title>Pokemon Moves Lua</title>
+
+<style>
+body{
+  background:#111;
+  color:#eee;
+  font-family:Consolas, monospace;
+  padding:20px;
+  text-align:center;
+}
+
+img{
+  width:120px;
+  height:120px;
+  background:#222;
+  border-radius:12px;
+  padding:10px;
+}
+
+pre{
+  background:#000;
+  padding:20px;
+  border-radius:8px;
+  max-height:60vh;
+  overflow:auto;
+  text-align:left;
+  margin-top:20px;
+}
+
+button{
+  margin:10px;
+  padding:6px 14px;
+}
+
+.error{
+  color:#ff6666;
+  white-space:pre-wrap;
+}
+</style>
+</head>
+
+<body>
+
+<img id="poke">
+<h2 id="name"></h2>
+
+<div>
+  <button onclick="copyCode()">📋 Copiar código</button>
+  <button onclick="location.href=document.referrer">⬅ Voltar</button>
+</div>
+
+<pre id="code">Carregando…</pre>
+
+<script>
+const params = new URLSearchParams(location.search)
+const id = params.get("id")
+
+const artwork = i =>
+`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${i}.png`
+
+const cap = s => s.charAt(0).toUpperCase()+s.slice(1)
+
+function roundCooldown(n){
+  const f = Math.floor(n)
+  return (n - f) >= 0.5 ? f + 1 : f
+}
+
+function calcCooldown(power, pp, acc, level, isStatus){
+  let cd =
+    Math.pow(power || 0, 1.2) / (pp || 1) +
+    (100 - (acc ?? 100)) * 0.3 +
+    level * 0.4
+
+  if(isStatus) cd += 10
+  return roundCooldown(cd)
+}
+
+window.copyCode = ()=>{
+  navigator.clipboard.writeText(document.getElementById("code").innerText)
+}
+
+async function load(){
+  try{
+    const p = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`).then(r=>r.json())
+
+    document.getElementById("poke").src = artwork(id)
+    document.getElementById("name").innerText = cap(p.name)
+
+    const moves = []
+
+    for(const m of p.moves){
+      const vg = m.version_group_details
+        .find(v=>v.move_learn_method.name==="level-up")
+      if(!vg) continue
+
+      const d = await fetch(m.move.url).then(r=>r.json())
+
+      moves.push({
+        level: vg.level_learned_at || 1,
+        name: cap(m.move.name.replace(/-/g," ")),
+        power: d.power,
+        pp: d.pp,
+        acc: d.accuracy,
+        category: d.damage_class.name,
+        type: cap(d.type.name)
+      })
+    }
+
+    moves.sort((a,b)=>a.level-b.level)
+
+    /* ===== ABILITY PASSIVA =====
+       regra:
+       - sempre a primeira ability NÃO hidden
+       - se tiver mais de uma (ex: Mr. Mime), pega a primeira
+    */
+    const passive =
+      p.abilities.find(a=>!a.is_hidden)?.ability.name ||
+      p.abilities[0].ability.name
+
+    let out = "moves = {\n"
+
+    moves.forEach((m,i)=>{
+      const isStatus = m.category === "status"
+      const cooldown = calcCooldown(m.power, m.pp, m.acc, m.level, isStatus)
+      const cond1 = isStatus ? "Buff" : "Damage"
+
+      out += `    [${i+1}] = {id = ${i+1}, word = "#${cap(p.name)} ${m.name}#", name = "${m.name}", level = ${m.level}, cooldown = ${cooldown}, description = "Any.", conditions = {"${cond1}", "${m.type}"}},\n`
+    })
+
+    /* ===== SPELL PASSIVA FINAL ===== */
+    const idx = moves.length + 1
+    out += `    [${idx}] = {id = ${idx}, word = "#${cap(p.name)} ${cap(passive.replace(/-/g," "))}#", name = "${cap(passive.replace(/-/g," "))}", level = 1, cooldown = 0, description = "Any.", conditions = {"Passive", "Buff"}},\n`
+
+    out += "},"
+
+    document.getElementById("code").innerText = out
+
+  }catch(err){
+    document.getElementById("code").innerHTML =
+      `<div class="error">ERRO CRÍTICO:\n${err.message}</div>`
+    console.error(err)
+  }
+}
+
+load()
+</script>
+
+</body>
+</html>
