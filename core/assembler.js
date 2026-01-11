@@ -1,4 +1,5 @@
 // ======================= core/assembler.js (FINAL – LOOT CORRETO POR EVOLUÇÃO) =======================
+console.log("ASSEMBLER VERSION 2 - DEPLOY CHECK")
 
 import { buildHeader } from "../modules/header.js"
 import { buildStatsInfo } from "../modules/stats_info.js"
