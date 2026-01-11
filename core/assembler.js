@@ -11,7 +11,9 @@ const normalize = s => s.toLowerCase().replace(/-/g, " ").trim()
 
 /* ======================= LOAD ITEMS ======================= */
 async function loadItems(){
-  const res = await fetch("../data/items.xml")
+  const res = await fetch(
+  new URL("../data/items.xml", import.meta.url)
+)
   if(!res.ok) return {}
 
   const txt = await res.text()
